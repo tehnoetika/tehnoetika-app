@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tehnoetika-app",
+  "account_id": "7dc7167b7e2e00923bfa7cd697df14e4", // D.O.M.
   "main": "src/index.tsx",
   "compatibility_date": "2026-07-01",
   "assets": {
@@ -11,8 +12,7 @@
     {
       "binding": "DB",
       "database_name": "tehnoetika-db",
-      // Nakon `wrangler d1 create tehnoetika-db` upiši dobiveni database_id.
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "13eb83a0-e372-4124-b410-27fc12a6ffe8",
       "migrations_dir": "migrations"
     }
   ],
