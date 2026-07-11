@@ -1,0 +1,24 @@
+{
+  "name": "tehnoetika-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source multitenant Substack alternative on Cloudflare Workers",
+  "license": "MIT",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "types": "wrangler types",
+    "db:migrate:local": "wrangler d1 migrations apply tehnoetika-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply tehnoetika-db --remote",
+    "db:seed:local": "wrangler d1 execute tehnoetika-db --local --file=./seed.sql"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250705.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.0.0"
+  }
+}
