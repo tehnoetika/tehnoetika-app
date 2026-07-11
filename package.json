@@ -14,10 +14,11 @@
     "db:seed:local": "wrangler d1 execute tehnoetika-db --local --file=./seed.sql"
   },
   "dependencies": {
-    "hono": "^4.6.0"
+    "hono": "^4.6.0",
+    "marked": "^18.0.6"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250705.0",
+    "@cloudflare/workers-types": "^5.20260708.1",
     "typescript": "^5.7.0",
     "wrangler": "^4.0.0"
   }

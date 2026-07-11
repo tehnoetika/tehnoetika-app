@@ -1,0 +1,39 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tehnoetika-app",
+  "main": "src/index.tsx",
+  "compatibility_date": "2026-07-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "tehnoetika-db",
+      // Nakon `wrangler d1 create tehnoetika-db` upiši dobiveni database_id.
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "tehnoetika-media"
+    }
+  ],
+  "vars": {
+    // Apex domena platforme (npr. "tehnoetika.hr"). Prazno = path-based tenancy (/@slug),
+    // što radi na *.workers.dev i lokalno.
+    "PLATFORM_HOST": "",
+    // From adresa za confirm mailove (mora biti verificirana kod providera).
+    "EMAIL_FROM": ""
+  },
+  "observability": { "enabled": true }
+  // Produkcija s vlastitom domenom: dodaj
+  // "routes": [
+  //   { "pattern": "example.com/*", "zone_name": "example.com" },
+  //   { "pattern": "*.example.com/*", "zone_name": "example.com" }
+  // ]
+  // Opcionalni secret za slanje emailova (double opt-in): wrangler secret put RESEND_API_KEY
+}
