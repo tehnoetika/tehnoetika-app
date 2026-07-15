@@ -7,6 +7,11 @@ export type Bindings = {
   PLATFORM_HOST: string;
   EMAIL_FROM: string;
   RESEND_API_KEY?: string;
+  // Domovina SSO (self-hosted Supabase GoTrue na api.domovina.ai).
+  // JWT_SECRET je tajni potpisni ključ (HS256) — worker secret; URL/ANON su javni.
+  SUPABASE_JWT_SECRET?: string;
+  SUPABASE_URL?: string;
+  SUPABASE_ANON_KEY?: string;
 };
 
 export type User = {

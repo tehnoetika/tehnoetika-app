@@ -62,6 +62,11 @@ const AuthForm = ({ mode, error }: { mode: 'login' | 'register'; error?: string 
         </label>
         <button type="submit">{mode === 'login' ? 'Prijavi se' : 'Registriraj se'}</button>
       </form>
+      {mode === 'login' ? (
+        <p class="muted">
+          <a href="/prijava">Prijava Domovina računom →</a>
+        </p>
+      ) : null}
       <p class="muted">
         {mode === 'login' ? (
           <>

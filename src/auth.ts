@@ -50,6 +50,56 @@ async function sha256Hex(value: string): Promise<string> {
   return toHex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value)));
 }
 
+// --- Domovina SSO: verifikacija Supabase GoTrue JWT-a (HS256) ---
+// Standardni 3-dijelni JWT potpisan projektnim JWT secretom (GOTRUE_JWT_SECRET).
+// Verificira potpis i provjerava exp. Ne miješa se s internim cookie sesijama —
+// koristi se samo u token-exchangeu (/api/auth/sso) da dokaže identitet korisnika.
+export interface SupabaseJwt {
+  sub?: string; // auth.users.id (uuid)
+  email?: string;
+  role?: string; // 'authenticated'
+  exp?: number;
+  aud?: string;
+  user_metadata?: { full_name?: string; name?: string; [k: string]: unknown };
+  [k: string]: unknown;
+}
+
+function b64urlDecode(s: string): Uint8Array {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = s.length % 4 ? 4 - (s.length % 4) : 0;
+  const bin = atob(s + '='.repeat(pad));
+  return Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
+}
+
+export async function verifyJwtHS256(token: string, secret: string): Promise<SupabaseJwt | null> {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [h, p, sig] = parts;
+  try {
+    const header = JSON.parse(new TextDecoder().decode(b64urlDecode(h))) as { alg?: string };
+    if (header.alg !== 'HS256') return null;
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    );
+    const ok = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      b64urlDecode(sig) as BufferSource,
+      new TextEncoder().encode(`${h}.${p}`)
+    );
+    if (!ok) return null;
+    const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(p))) as SupabaseJwt;
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Ctx = Context<{ Bindings: Bindings; Variables: any }>;
 

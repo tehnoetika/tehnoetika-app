@@ -6,6 +6,7 @@ import { registerApiRoutes } from './routes/api';
 import { RESERVED_SLUGS, registerPlatformRoutes } from './routes/dashboard';
 import { registerMediaRoutes } from './routes/media';
 import { registerTenantRoutes, type AppEnv } from './routes/public';
+import { registerSsoRoutes } from './routes/sso';
 
 const app = new Hono<AppEnv>();
 
@@ -24,6 +25,10 @@ app.use('*', async (c, next) => {
         const pub = await pubBySlug(c.env.DB, sub);
         if (!pub) return c.text('Publikacija ne postoji.', 404);
         c.set('tenant', { pub, base: '', absBase: `${url.protocol}//${url.host}` });
+      } else {
+        // Rezervirani/poseban subdomen (npr. www) može biti vezan na publikaciju preko custom_domain.
+        const pub = await pubByDomain(c.env.DB, hostname);
+        if (pub) c.set('tenant', { pub, base: '', absBase: `${url.protocol}//${url.host}` });
       }
     } else {
       const pub = await pubByDomain(c.env.DB, hostname);
@@ -35,6 +40,8 @@ app.use('*', async (c, next) => {
 
 registerMediaRoutes(app);
 registerApiRoutes(app);
+// Domovina SSO (login stranica + token-exchange) — ungated, prije platformskih ruta.
+registerSsoRoutes(app);
 // Tenant rute prije platformskih: handleri padaju na next() kad tenant nije razriješen,
 // pa apex '/' završi na platformskom landingu.
 registerTenantRoutes(app);

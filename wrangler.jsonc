@@ -4,6 +4,8 @@
   "account_id": "7dc7167b7e2e00923bfa7cd697df14e4", // D.O.M.
   "main": "src/index.tsx",
   "compatibility_date": "2026-07-01",
+  // Zadrži *.workers.dev URL kao fallback/testni pristup uz custom domene.
+  "workers_dev": true,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
@@ -23,17 +25,28 @@
     }
   ],
   "vars": {
-    // Apex domena platforme (npr. "tehnoetika.hr"). Prazno = path-based tenancy (/@slug),
-    // što radi na *.workers.dev i lokalno.
-    "PLATFORM_HOST": "",
+    // Apex domena platforme. Prazno = path-based tenancy (/@slug), radi na *.workers.dev i lokalno.
+    // tehnoetika.com = platforma (landing/registracija/dashboard); tenanti su subdomeni.
+    "PLATFORM_HOST": "tehnoetika.com",
     // From adresa za confirm mailove (mora biti verificirana kod providera).
-    "EMAIL_FROM": ""
+    "EMAIL_FROM": "",
+    // Domovina SSO (self-hosted Supabase GoTrue). URL + anon su JAVNI (idu u browser).
+    // Anon key = SERVICE_SUPABASEANON_KEY s GoTrue hosta (169-zn JWT); prazno = SSO isključen.
+    "SUPABASE_URL": "https://api.domovina.ai",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsImlhdCI6MTc3OTExMTcxMywiZXhwIjo0OTMyNzExNzEzLCJyb2xlIjoiYW5vbiJ9.Q4Ef7xMc2dmjMyfJebPDyqNirnARZzMxTWe7i0dASPI"
   },
-  "observability": { "enabled": true }
-  // Produkcija s vlastitom domenom: dodaj
-  // "routes": [
-  //   { "pattern": "example.com/*", "zone_name": "example.com" },
-  //   { "pattern": "*.example.com/*", "zone_name": "example.com" }
-  // ]
+  "observability": { "enabled": true },
+  // custom_domain: true → wrangler AUTOMATSKI kreira DNS + SSL cert za taj host (bez ručnog DNS-a).
+  //   - apex tehnoetika.com = platforma (registracija/dashboard)
+  //   - www.tehnoetika.com  = Lukin default tenant (mapiran preko custom_domain u postavkama publikacije)
+  // Wildcard route hvata SVE tenant subdomene {slug}.tehnoetika.com (Substack model).
+  // Traži proxied `*` DNS zapis u zoni; Universal SSL pokriva *.tehnoetika.com (1 razina).
+  // www je custom_domain (specifičniji) pa ide na Lukin tenant, ne na wildcard.
+  "routes": [
+    { "pattern": "tehnoetika.com", "custom_domain": true },
+    { "pattern": "www.tehnoetika.com", "custom_domain": true },
+    { "pattern": "*.tehnoetika.com/*", "zone_name": "tehnoetika.com" }
+  ]
   // Opcionalni secret za slanje emailova (double opt-in): wrangler secret put RESEND_API_KEY
+  // Domovina SSO secret (GoTrue HS256 potpisni ključ): wrangler secret put SUPABASE_JWT_SECRET
 }

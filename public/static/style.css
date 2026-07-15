@@ -92,10 +92,12 @@ main { max-width: 680px; margin: 0 auto; padding: 0 1.25rem 3rem; }
 
 /* ---------- Platforma / dashboard ---------- */
 .platform main.platform-main { max-width: 960px; padding-top: 1.5rem; }
-.platform-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--line); }
-.platform-header .brand { font-weight: 700; font-size: 1.15rem; color: var(--ink); }
+.platform-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; min-height: 3.5rem; padding: .6rem 1.5rem; border-bottom: 1px solid var(--line); }
+.platform-header .brand { display: inline-flex; align-items: center; line-height: 1; font-weight: 700; font-size: 1.15rem; color: var(--ink); }
 .platform-header .brand span { color: var(--accent); font-weight: 400; }
 .platform-header nav { display: flex; align-items: center; gap: 1rem; }
+.platform-header nav a { display: inline-flex; align-items: center; line-height: 1; }
+.platform-header .inline-form { display: inline-flex; align-items: center; margin: 0; }
 .platform-footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 2rem; }
 .inline-form { display: inline; }
 .linklike { background: none; border: 0; color: var(--accent); cursor: pointer; font-size: 1rem; padding: 0; }
@@ -154,3 +156,23 @@ button.small { font-size: .8rem; padding: .2rem .5rem; }
 .media-item figcaption { padding: .5rem; font-size: .8rem; display: flex; justify-content: space-between; align-items: center; gap: .4rem; }
 .media-item code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; }
 .logo-preview { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; margin-top: .5rem; }
+
+/* Domovina SSO login */
+#sso-box #sso-magic { width: 100%; }
+.sso-or { display: flex; align-items: center; gap: .75rem; color: var(--muted, #888); margin: 1.1rem 0; font-size: .85rem; }
+.sso-or::before, .sso-or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+button.secondary { width: 100%; background: #fff; color: var(--ink); border: 1px solid var(--line); }
+button.secondary:hover { opacity: .92; }
+#sso-status:not([hidden]) { display: block; }
+
+/* Google sign-in button (službeni izgled: bijela pozadina, G logo) */
+.btn-google {
+  width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: .65rem;
+  background: #fff; color: #3c4043; border: 1px solid #dadce0; border-radius: 8px;
+  padding: .65rem 1rem; font-size: .95rem; font-weight: 500; line-height: 1; cursor: pointer;
+  transition: background .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.btn-google:hover { background: #f7f8f9; box-shadow: 0 1px 3px rgba(60,64,67,.18); border-color: #d2d5d9; }
+.btn-google:active { background: #eef0f2; }
+.btn-google .g-logo { flex: 0 0 auto; display: block; }
