@@ -1,11 +1,14 @@
-/* Tehnoetika platforma — jedna tema, akcentna boja po publikaciji (--accent). */
+/* Tehnoetika platforma — editorijalna tema (inspirirano First Things), akcent po publikaciji (--accent). */
 :root {
-  --accent: #1a7f6b;
-  --ink: #1a1a1a;
-  --muted: #6b6b6b;
-  --line: #e6e2da;
-  --bg: #fffdf9;
-  --serif: Georgia, 'Times New Roman', serif;
+  --accent: #8c1b11;          /* fallback burgundy; publikacija ga override-a preko Head inline stila */
+  --ink: #16130f;             /* skoro crna, topli ton */
+  --muted: #57534e;           /* deck / sekundarni tekst */
+  --faint: #8a8078;           /* meta labele, datumi */
+  --line: #e4ded4;            /* hairline borderi */
+  --rule: #16130f;            /* jaki crni print-rule */
+  --bg: #fffdf9;              /* topla bijela */
+  --footer-bg: #f7f3ec;       /* topli off-white footer */
+  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman', serif;
   --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -16,79 +19,153 @@ body {
   color: var(--ink);
   background: var(--bg);
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 img, video { max-width: 100%; height: auto; }
-main { max-width: 680px; margin: 0 auto; padding: 0 1.25rem 3rem; }
+main { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 
-/* ---------- Tenant (javna stranica) ---------- */
-.site-header { text-align: center; padding: 2.5rem 1rem 1rem; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
-.site-identity { display: inline-flex; align-items: center; gap: .6rem; color: var(--ink); }
+/* Uska čitljiva mjera za članke / arhivu / statične stranice (~70ch). */
+.reading-col { max-width: 720px; margin: 0 auto; }
+
+/* Sekcijska labela — sans, uppercase, "print rubrika". */
+.section-label {
+  font-family: var(--sans); font-size: .8rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .18em; color: var(--faint); margin: 0 0 1rem;
+  padding-bottom: .6rem; border-bottom: 2px solid var(--rule);
+}
+
+/* ---------- Tenant masthead ---------- */
+.site-header { text-align: center; padding: 2.4rem 1rem 1.1rem; border-bottom: 2px solid var(--rule); margin-bottom: 2.4rem; }
+.site-identity { display: inline-flex; align-items: center; gap: .7rem; color: var(--ink); }
 .site-identity:hover { text-decoration: none; }
-.site-logo { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
-.site-name { font-family: var(--serif); font-size: 1.7rem; font-weight: 700; }
-.site-tagline { color: var(--muted); margin: .4rem auto .9rem; max-width: 560px; }
-.site-nav { display: flex; flex-wrap: wrap; gap: 1.1rem; justify-content: center; font-size: .95rem; }
+.site-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.site-name {
+  font-family: var(--serif); font-weight: 500; line-height: 1.05;
+  font-size: clamp(1.8rem, 4vw, 2.7rem); letter-spacing: .01em;
+}
+.site-tagline { font-family: var(--serif); font-style: italic; color: var(--muted); margin: .5rem auto 1.1rem; max-width: 620px; font-size: 1.05rem; }
+.site-nav {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: .4rem .9rem; padding-top: 1rem; border-top: 1px solid var(--line);
+  font-family: var(--sans); font-size: .78rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .14em;
+}
 .site-nav a { color: var(--ink); }
-.site-nav a:hover { color: var(--accent); }
+.site-nav a:hover { color: var(--accent); text-decoration: none; }
+.site-nav a + a { border-left: 1px solid var(--line); padding-left: .9rem; }
 
-.subscribe { background: #f6f3ec; border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem 1.25rem; margin: 0 0 2rem; }
-.subscribe-lead { margin: 0 0 .6rem; font-weight: 600; }
-.subscribe-row { display: flex; gap: .5rem; }
-.subscribe input[type="email"] { flex: 1; padding: .55rem .8rem; border: 1px solid var(--line); border-radius: 6px; font-size: 1rem; }
+/* ---------- Subscribe ---------- */
+.subscribe { background: var(--footer-bg); border: 1px solid var(--line); border-radius: 4px; padding: 1.4rem 1.5rem; margin: 0 0 2rem; }
+.subscribe-lead { margin: 0 0 .7rem; font-family: var(--serif); font-size: 1.2rem; font-weight: 500; }
+.subscribe-row { display: flex; gap: .5rem; flex-wrap: wrap; }
+.subscribe input[type="email"] { flex: 1 1 220px; padding: .6rem .85rem; border: 1px solid var(--line); border-radius: 3px; font-size: 1rem; background: #fff; }
 .subscribe button, .btn, button[type="submit"] {
-  background: var(--accent); color: #fff; border: 0; border-radius: 6px;
-  padding: .55rem 1.1rem; font-size: 1rem; cursor: pointer;
+  background: var(--accent); color: #fff; border: 0; border-radius: 3px;
+  padding: .6rem 1.3rem; font-size: .8rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; cursor: pointer;
 }
 .btn { display: inline-block; }
 .btn:hover { text-decoration: none; opacity: .92; }
 
-.hero { margin-bottom: 2.2rem; }
-.hero-cover { border-radius: 8px; margin-bottom: .8rem; }
-.hero h2 { font-family: var(--serif); font-size: 1.9rem; margin: 0 0 .3rem; line-height: 1.25; }
+/* ---------- Home: editorijalni grid (featured 2fr + Najnovije 1fr) ---------- */
+.home { display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; align-items: start; }
+.home-cta { margin-top: 3rem; padding-top: 2.4rem; border-top: 2px solid var(--rule); }
+.home-cta .subscribe { margin: 0; }
+
+.hero { border: 0; }
+.hero-cover { border-radius: 3px; margin-bottom: 1rem; width: 100%; }
+.hero h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -.01em; font-size: clamp(1.9rem, 3.4vw, 3rem); margin: 0 0 .5rem; line-height: 1.08; }
 .hero h2 a { color: var(--ink); }
-.hero-subtitle { color: var(--muted); font-size: 1.1rem; margin: 0 0 .3rem; }
-.hero time, .post-card time { color: var(--muted); font-size: .85rem; }
+.hero h2 a:hover { color: var(--accent); text-decoration: none; }
+.hero-subtitle { font-family: var(--serif); color: var(--muted); font-size: 1.2rem; line-height: 1.45; margin: 0 0 .6rem; }
 
+/* Meta (datumi/kicker) — sans, uppercase. */
+.hero time, .post-card time, .latest-item time {
+  display: inline-block; font-family: var(--sans); font-size: .72rem; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--faint);
+}
+
+/* Najnovije — tekstualna lista bez thumbnaila. */
+.home-latest { position: sticky; top: 1.5rem; }
+.latest { list-style: none; margin: 0; padding: 0; }
+.latest-item { padding: .9rem 0; border-top: 1px solid var(--line); }
+.latest-item:first-child { border-top: 0; padding-top: 0; }
+.latest-item a { font-family: var(--serif); font-weight: 500; font-size: 1.15rem; line-height: 1.2; color: var(--ink); display: block; margin-bottom: .3rem; }
+.latest-item a:hover { color: var(--accent); text-decoration: none; }
+
+/* ---------- Post lista / kartice (arhiva + sekundarni) ---------- */
 .post-list { display: flex; flex-direction: column; }
-.post-card { display: flex; gap: 1rem; justify-content: space-between; padding: 1.1rem 0; border-top: 1px solid var(--line); }
-.post-card h3 { font-family: var(--serif); font-size: 1.25rem; margin: 0 0 .2rem; line-height: 1.3; }
+.post-card { display: flex; gap: 1.4rem; justify-content: space-between; align-items: start; padding: 1.5rem 0; border-top: 1px solid var(--line); }
+.post-card:first-child { border-top: 0; }
+.post-card-text { flex: 1; }
+.post-card h3 { font-family: var(--serif); font-weight: 500; font-size: 1.5rem; margin: 0 0 .35rem; line-height: 1.15; }
 .post-card h3 a { color: var(--ink); }
-.post-card-subtitle { color: var(--muted); margin: 0 0 .2rem; }
-.post-card-thumb { width: 130px; height: 88px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+.post-card h3 a:hover { color: var(--accent); text-decoration: none; }
+.post-card-subtitle { font-family: var(--serif); color: var(--muted); margin: 0 0 .45rem; font-size: 1.02rem; line-height: 1.4; }
+.post-card-thumb { width: 150px; height: 100px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
 
-.page-title { font-family: var(--serif); }
-.pagination { display: flex; justify-content: space-between; padding: 1.5rem 0; }
-.more { text-align: center; }
+.page-title { font-family: var(--serif); font-weight: 500; font-size: clamp(1.9rem, 3vw, 2.4rem); margin: 0 0 1.4rem; letter-spacing: -.01em; }
+.pagination { display: flex; justify-content: space-between; padding: 1.8rem 0; font-family: var(--sans); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
+.more { margin-top: 1rem; font-family: var(--sans); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
 .empty { color: var(--muted); text-align: center; padding: 2rem 0; }
 
-/* Post */
-.post h1 { font-family: var(--serif); font-size: 2.1rem; line-height: 1.2; margin: 0 0 .4rem; }
-.post-subtitle { color: var(--muted); font-size: 1.2rem; margin: 0 0 1rem; }
-.byline { display: flex; align-items: center; gap: .5rem; color: var(--muted); font-size: .9rem; margin-bottom: 1.4rem; }
-.byline img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
-.post-cover { border-radius: 8px; margin-bottom: 1.4rem; }
+/* ---------- Article / reading ---------- */
+.post h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; letter-spacing: -.015em; margin: 0 0 .5rem; }
+.post-subtitle { font-family: var(--serif); color: var(--muted); font-size: 1.35rem; line-height: 1.35; margin: 0 0 1.2rem; }
+.byline {
+  display: flex; align-items: center; gap: .6rem; margin-bottom: 1.6rem;
+  padding-bottom: 1.1rem; border-bottom: 1px solid var(--line);
+  font-family: var(--sans); font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em;
+}
+.byline img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.byline > span:not(.dot) { color: var(--accent); }
+.byline .dot { color: var(--line); }
+.byline time { color: var(--faint); }
+.post-cover { border-radius: 3px; margin-bottom: 1.6rem; width: 100%; }
 
-.post-body { font-family: var(--serif); font-size: 1.15rem; line-height: 1.75; }
-.post-body h2, .post-body h3, .post-body h4 { font-family: var(--serif); line-height: 1.3; margin: 1.8em 0 .5em; }
-.post-body hr { border: 0; border-top: 1px solid var(--line); margin: 2rem auto; width: 60%; }
-.post-body blockquote { border-left: 3px solid var(--accent); margin: 1.2em 0; padding: .1em 0 .1em 1.2em; color: #444; }
-.post-body img { border-radius: 6px; margin: .5em 0; }
-.post-body code { background: #f2efe8; padding: .1em .35em; border-radius: 4px; font-size: .9em; font-family: ui-monospace, monospace; }
-.post-body pre { background: #f2efe8; padding: 1em; border-radius: 8px; overflow-x: auto; }
+.post-body { font-family: var(--serif); font-size: 1.25rem; line-height: 1.7; color: var(--ink); }
+.post-body > p { margin: 0 0 1.1em; }
+.post-body > p:first-of-type::first-letter {
+  float: left; font-family: var(--serif); font-weight: 500; font-size: 3.4em;
+  line-height: .74; padding: .05em .08em 0 0; color: var(--ink);
+}
+.post-body h2, .post-body h3, .post-body h4 { font-family: var(--serif); font-weight: 500; line-height: 1.2; margin: 1.6em 0 .5em; }
+.post-body h2 { font-size: 1.6rem; }
+.post-body h3 { font-size: 1.35rem; }
+.post-body a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.post-body hr { border: 0; border-top: 1px solid var(--rule); margin: 2.2rem auto; width: 40%; }
+.post-body blockquote { border-left: 3px solid var(--accent); margin: 1.4em 0; padding: .2em 0 .2em 1.3em; color: var(--muted); font-style: italic; }
+.post-body img { border-radius: 3px; margin: 1em 0; }
+.post-body code { background: #f2efe8; padding: .1em .35em; border-radius: 3px; font-size: .85em; font-family: ui-monospace, monospace; }
+.post-body pre { background: #f2efe8; padding: 1em; border-radius: 6px; overflow-x: auto; }
 .post-body pre code { background: none; padding: 0; }
 
-.embed { position: relative; aspect-ratio: 16 / 9; margin: 1.2em 0; }
-.embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 8px; }
-.embed-video video { width: 100%; border-radius: 8px; margin: 1.2em 0; }
+.embed { position: relative; aspect-ratio: 16 / 9; margin: 1.4em 0; }
+.embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 3px; }
+.embed-video video { width: 100%; border-radius: 3px; margin: 1.4em 0; }
 
-.site-footer { border-top: 1px solid var(--line); margin-top: 3rem; padding: 2rem 1.25rem; max-width: 680px; margin-left: auto; margin-right: auto; }
-.footer-meta { text-align: center; color: var(--muted); font-size: .85rem; }
+/* ---------- Footer ---------- */
+.site-footer { background: var(--footer-bg); border-top: 2px solid var(--rule); margin-top: 4rem; padding: 2.5rem 1.5rem; }
+.site-footer .subscribe { max-width: 620px; margin: 0 auto 1.4rem; background: #fff; }
+.footer-meta { text-align: center; color: var(--faint); font-family: var(--sans); font-size: .74rem; text-transform: uppercase; letter-spacing: .1em; }
+.footer-meta a { color: var(--muted); }
 
-.flash { padding: .8rem 1rem; border-radius: 8px; margin: 1rem 0; }
+.flash { padding: .8rem 1rem; border-radius: 4px; margin: 1rem 0; }
 .flash-ok { background: #e8f5ee; border: 1px solid #b7dfc9; }
 .flash-err { background: #fdeaea; border: 1px solid #f2bcbc; }
+
+/* Tenant responsive */
+@media (max-width: 820px) {
+  .home { grid-template-columns: 1fr; gap: 2.4rem; }
+  .home-latest { position: static; }
+}
+@media (max-width: 560px) {
+  .post-card-thumb { width: 96px; height: 68px; }
+  .post-body > p:first-of-type::first-letter { font-size: 2.8em; }
+}
 
 /* ---------- Platforma / dashboard ---------- */
 .platform main.platform-main { max-width: 960px; padding-top: 1.5rem; }

@@ -17,6 +17,7 @@ import { emailEnabled, sendEmail } from '../email';
 import { escapeHtml } from '../markdown';
 import {
   Flash,
+  LatestItem,
   PostCard,
   SubscribeForm,
   TenantLayout,
@@ -60,31 +61,38 @@ async function homePage(c: C, t: TenantCtx) {
     navPages(c.env.DB, t.pub.id),
   ]);
   const [hero, ...rest] = posts;
+  const latest = rest.slice(0, 7);
   return c.html(
     <TenantLayout tenant={t} pages={pages}>
-      <SubscribeForm tenant={t} />
       {hero ? (
-        <article class="hero">
-          {coverUrl(hero) ? <img class="hero-cover" src={coverUrl(hero)!} alt="" /> : null}
-          <h2>
-            <a href={`${t.base}/p/${hero.slug}`}>{hero.title}</a>
-          </h2>
-          {hero.subtitle ? <p class="hero-subtitle">{hero.subtitle}</p> : null}
-          <time>{formatDate(hero.published_at)}</time>
-        </article>
+        <div class="home">
+          <article class="hero">
+            {coverUrl(hero) ? <img class="hero-cover" src={coverUrl(hero)!} alt="" /> : null}
+            <h2>
+              <a href={`${t.base}/p/${hero.slug}`}>{hero.title}</a>
+            </h2>
+            {hero.subtitle ? <p class="hero-subtitle">{hero.subtitle}</p> : null}
+            <time>{formatDate(hero.published_at)}</time>
+          </article>
+          {latest.length > 0 ? (
+            <aside class="home-latest">
+              <h2 class="section-label">Najnovije</h2>
+              <ol class="latest">
+                {latest.map((p) => (
+                  <LatestItem tenant={t} post={p} />
+                ))}
+              </ol>
+              {posts.length > 8 ? (
+                <p class="more">
+                  <a href={`${t.base}/archive`}>Cijela arhiva →</a>
+                </p>
+              ) : null}
+            </aside>
+          ) : null}
+        </div>
       ) : (
         <p class="empty">Još nema objava.</p>
       )}
-      <section class="post-list">
-        {rest.map((p) => (
-          <PostCard tenant={t} post={p} coverUrl={coverUrl(p)} />
-        ))}
-      </section>
-      {posts.length > 10 ? (
-        <p class="more">
-          <a href={`${t.base}/archive`}>Cijela arhiva →</a>
-        </p>
-      ) : null}
     </TenantLayout>
   );
 }
@@ -99,20 +107,22 @@ async function archivePage(c: C, t: TenantCtx) {
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
   return c.html(
     <TenantLayout tenant={t} pages={pages} title="Arhiva">
-      <h1 class="page-title">Arhiva</h1>
-      <section class="post-list">
-        {posts.map((p) => (
-          <PostCard tenant={t} post={p} coverUrl={coverUrl(p)} />
-        ))}
-        {posts.length === 0 ? <p class="empty">Nema objava na ovoj stranici.</p> : null}
-      </section>
-      <nav class="pagination">
-        {page > 1 ? <a href={`${t.base}/archive?page=${page - 1}`}>← Novije</a> : <span />}
-        <span>
-          {page} / {lastPage}
-        </span>
-        {page < lastPage ? <a href={`${t.base}/archive?page=${page + 1}`}>Starije →</a> : <span />}
-      </nav>
+      <div class="reading-col">
+        <h1 class="page-title">Arhiva</h1>
+        <section class="post-list">
+          {posts.map((p) => (
+            <PostCard tenant={t} post={p} coverUrl={coverUrl(p)} />
+          ))}
+          {posts.length === 0 ? <p class="empty">Nema objava na ovoj stranici.</p> : null}
+        </section>
+        <nav class="pagination">
+          {page > 1 ? <a href={`${t.base}/archive?page=${page - 1}`}>← Novije</a> : <span />}
+          <span>
+            {page} / {lastPage}
+          </span>
+          {page < lastPage ? <a href={`${t.base}/archive?page=${page + 1}`}>Starije →</a> : <span />}
+        </nav>
+      </div>
     </TenantLayout>
   );
 }
@@ -133,7 +143,7 @@ async function postPage(c: C, t: TenantCtx) {
       description={post.subtitle || undefined}
       ogImage={post.cover_media_id ? `${origin}${coverUrl(post)}` : undefined}
     >
-      <article class="post">
+      <article class="post reading-col">
         <h1>{post.title}</h1>
         {post.subtitle ? <p class="post-subtitle">{post.subtitle}</p> : null}
         <div class="byline">
@@ -157,7 +167,7 @@ async function aboutPage(c: C, t: TenantCtx) {
   const pages = await navPages(c.env.DB, t.pub.id);
   return c.html(
     <TenantLayout tenant={t} pages={pages} title="O nama">
-      <article class="post">
+      <article class="post reading-col">
         <h1>O nama</h1>
         <div class="post-body" dangerouslySetInnerHTML={{ __html: t.pub.about_html }} />
       </article>

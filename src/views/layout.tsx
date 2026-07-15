@@ -97,6 +97,13 @@ export const SubscribeForm: FC<{ tenant: TenantCtx }> = ({ tenant }) => (
   </form>
 );
 
+export const LatestItem: FC<{ tenant: TenantCtx; post: Post }> = ({ tenant, post }) => (
+  <li class="latest-item">
+    <a href={`${tenant.base}/p/${post.slug}`}>{post.title}</a>
+    <time>{formatDate(post.published_at)}</time>
+  </li>
+);
+
 export const PostCard: FC<{ tenant: TenantCtx; post: Post; coverUrl?: string | null }> = ({
   tenant,
   post,
