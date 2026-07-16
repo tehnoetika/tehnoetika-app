@@ -50,9 +50,19 @@ export type Post = {
   status: 'draft' | 'published';
   visibility: string;
   pinned_nav: number;
+  category_id: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type Category = {
+  id: string;
+  publication_id: string;
+  name: string;
+  slug: string;
+  position: number;
+  created_at: string;
 };
 
 export type Media = {
@@ -185,6 +195,76 @@ export async function uniquePostSlug(
     const row = await db
       .prepare('SELECT id FROM posts WHERE publication_id = ? AND slug = ? AND id != ?')
       .bind(pubId, slug, excludePostId ?? '')
+      .first();
+    if (!row) return slug;
+    slug = `${base}-${i}`;
+  }
+  return `${base}-${newId().slice(0, 6)}`;
+}
+
+// --- Categories (rubrike) ---
+
+export async function categoriesForPub(db: D1Database, pubId: string): Promise<Category[]> {
+  const r = await db
+    .prepare('SELECT * FROM categories WHERE publication_id = ? ORDER BY position, name')
+    .bind(pubId)
+    .all<Category>();
+  return r.results;
+}
+
+export async function categoryBySlug(
+  db: D1Database,
+  pubId: string,
+  slug: string
+): Promise<Category | null> {
+  return db
+    .prepare('SELECT * FROM categories WHERE publication_id = ? AND slug = ?')
+    .bind(pubId, slug)
+    .first<Category>();
+}
+
+/** Objavljeni postovi u jednoj rubrici (najnoviji prvo). */
+export async function publishedPostsByCategory(
+  db: D1Database,
+  pubId: string,
+  categoryId: string,
+  limit: number,
+  offset = 0
+): Promise<Post[]> {
+  const r = await db
+    .prepare(
+      "SELECT * FROM posts WHERE publication_id = ? AND category_id = ? AND status = 'published' AND kind = 'post' ORDER BY published_at DESC LIMIT ? OFFSET ?"
+    )
+    .bind(pubId, categoryId, limit, offset)
+    .all<Post>();
+  return r.results;
+}
+
+export async function publishedPostCountByCategory(
+  db: D1Database,
+  pubId: string,
+  categoryId: string
+): Promise<number> {
+  const row = await db
+    .prepare(
+      "SELECT COUNT(*) AS n FROM posts WHERE publication_id = ? AND category_id = ? AND status = 'published' AND kind = 'post'"
+    )
+    .bind(pubId, categoryId)
+    .first<{ n: number }>();
+  return row?.n ?? 0;
+}
+
+/** Jedinstveni slug rubrike unutar publikacije. */
+export async function uniqueCategorySlug(
+  db: D1Database,
+  pubId: string,
+  base: string
+): Promise<string> {
+  let slug = base || 'rubrika';
+  for (let i = 2; i < 100; i++) {
+    const row = await db
+      .prepare('SELECT id FROM categories WHERE publication_id = ? AND slug = ?')
+      .bind(pubId, slug)
       .first();
     if (!row) return slug;
     slug = `${base}-${i}`;

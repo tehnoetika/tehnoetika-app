@@ -1,14 +1,16 @@
-/* Tehnoetika platforma — editorijalna tema (inspirirano First Things), akcent po publikaciji (--accent). */
+/* Tehnoetika platforma — editorijalna tema (Sapere Aude: Lora/Spectral + krem/zlato), akcent po publikaciji (--accent). */
 :root {
   --accent: #8c1b11;          /* fallback burgundy; publikacija ga override-a preko Head inline stila */
-  --ink: #16130f;             /* skoro crna, topli ton */
-  --muted: #57534e;           /* deck / sekundarni tekst */
+  --gold: #b8935a;            /* topli tan/zlato — dekorativni akcent (rubrike, hairline detalji) */
+  --ink: #1a1a1a;             /* skoro crna (Substack ink) */
+  --muted: #4f4f4f;           /* deck / sekundarni tekst */
   --faint: #8a8078;           /* meta labele, datumi */
   --line: #e4ded4;            /* hairline borderi */
-  --rule: #16130f;            /* jaki crni print-rule */
-  --bg: #fffdf9;              /* topla bijela */
-  --footer-bg: #f7f3ec;       /* topli off-white footer */
-  --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman', serif;
+  --rule: #1a1a1a;            /* jaki crni print-rule */
+  --bg: #fafafa;              /* Substack off-white */
+  --footer-bg: #f3f0e9;       /* topli off-white footer */
+  --serif: 'Lora', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+  --serif-display: 'Spectral', 'Lora', Georgia, 'Times New Roman', serif;
   --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -43,7 +45,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 .site-identity:hover { text-decoration: none; }
 .site-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
 .site-name {
-  font-family: var(--serif); font-weight: 500; line-height: 1.05;
+  font-family: var(--serif-display); font-weight: 500; line-height: 1.05;
   font-size: clamp(1.8rem, 4vw, 2.7rem); letter-spacing: .01em;
 }
 .site-tagline { font-family: var(--serif); font-style: italic; color: var(--muted); margin: .5rem auto 1.1rem; max-width: 620px; font-size: 1.05rem; }
@@ -75,9 +77,17 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 .home-cta { margin-top: 3rem; padding-top: 2.4rem; border-top: 2px solid var(--rule); }
 .home-cta .subscribe { margin: 0; }
 
+/* Tematske sekcije ispod featured grida (First Things rubrike). */
+.home-section { margin-top: 2.8rem; padding-top: 1.6rem; border-top: 2px solid var(--rule); }
+.home-section .section-label a { color: var(--ink); }
+.home-section .section-label a:hover { color: var(--accent); text-decoration: none; }
+.section-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.4rem 2.6rem; }
+.section-grid .post-card { border-top: 0; padding: 0; }
+@media (max-width: 700px) { .section-grid { grid-template-columns: 1fr; } }
+
 .hero { border: 0; }
 .hero-cover { border-radius: 3px; margin-bottom: 1rem; width: 100%; }
-.hero h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -.01em; font-size: clamp(1.9rem, 3.4vw, 3rem); margin: 0 0 .5rem; line-height: 1.08; }
+.hero h2 { font-family: var(--serif-display); font-weight: 500; letter-spacing: -.01em; font-size: clamp(1.9rem, 3.4vw, 3rem); margin: 0 0 .5rem; line-height: 1.08; }
 .hero h2 a { color: var(--ink); }
 .hero h2 a:hover { color: var(--accent); text-decoration: none; }
 .hero-subtitle { font-family: var(--serif); color: var(--muted); font-size: 1.2rem; line-height: 1.45; margin: 0 0 .6rem; }
@@ -101,19 +111,19 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 .post-card { display: flex; gap: 1.4rem; justify-content: space-between; align-items: start; padding: 1.5rem 0; border-top: 1px solid var(--line); }
 .post-card:first-child { border-top: 0; }
 .post-card-text { flex: 1; }
-.post-card h3 { font-family: var(--serif); font-weight: 500; font-size: 1.5rem; margin: 0 0 .35rem; line-height: 1.15; }
+.post-card h3 { font-family: var(--serif-display); font-weight: 500; font-size: 1.5rem; margin: 0 0 .35rem; line-height: 1.15; }
 .post-card h3 a { color: var(--ink); }
 .post-card h3 a:hover { color: var(--accent); text-decoration: none; }
 .post-card-subtitle { font-family: var(--serif); color: var(--muted); margin: 0 0 .45rem; font-size: 1.02rem; line-height: 1.4; }
 .post-card-thumb { width: 150px; height: 100px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
 
-.page-title { font-family: var(--serif); font-weight: 500; font-size: clamp(1.9rem, 3vw, 2.4rem); margin: 0 0 1.4rem; letter-spacing: -.01em; }
+.page-title { font-family: var(--serif-display); font-weight: 500; font-size: clamp(1.9rem, 3vw, 2.4rem); margin: 0 0 1.4rem; letter-spacing: -.01em; }
 .pagination { display: flex; justify-content: space-between; padding: 1.8rem 0; font-family: var(--sans); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
 .more { margin-top: 1rem; font-family: var(--sans); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
 .empty { color: var(--muted); text-align: center; padding: 2rem 0; }
 
 /* ---------- Article / reading ---------- */
-.post h1 { font-family: var(--serif); font-weight: 500; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; letter-spacing: -.015em; margin: 0 0 .5rem; }
+.post h1 { font-family: var(--serif-display); font-weight: 500; font-size: clamp(2rem, 4vw, 3rem); line-height: 1.08; letter-spacing: -.015em; margin: 0 0 .5rem; }
 .post-subtitle { font-family: var(--serif); color: var(--muted); font-size: 1.35rem; line-height: 1.35; margin: 0 0 1.2rem; }
 .byline {
   display: flex; align-items: center; gap: .6rem; margin-bottom: 1.6rem;
@@ -132,7 +142,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem 4rem; }
   float: left; font-family: var(--serif); font-weight: 500; font-size: 3.4em;
   line-height: .74; padding: .05em .08em 0 0; color: var(--ink);
 }
-.post-body h2, .post-body h3, .post-body h4 { font-family: var(--serif); font-weight: 500; line-height: 1.2; margin: 1.6em 0 .5em; }
+.post-body h2, .post-body h3, .post-body h4 { font-family: var(--serif-display); font-weight: 500; line-height: 1.2; margin: 1.6em 0 .5em; }
 .post-body h2 { font-size: 1.6rem; }
 .post-body h3 { font-size: 1.35rem; }
 .post-body a { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
@@ -203,6 +213,15 @@ label.check input { width: auto; margin: 0; }
 .dash-nav a.active { font-weight: 700; }
 .list-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
 
+/* Rubrike (dashboard) */
+.cat-add { display: flex; gap: .6rem; margin: 1rem 0 1.4rem; flex-wrap: wrap; }
+.cat-add input { flex: 1 1 260px; padding: .6rem .85rem; border: 1px solid var(--line); border-radius: 6px; font-size: 1rem; background: #fff; }
+.cat-list { list-style: none; padding: 0; margin: 0; }
+.cat-list li { display: flex; align-items: center; gap: 1rem; padding: .8rem 1rem; background: #fff; border: 1px solid var(--line); border-radius: 8px; margin-bottom: .5rem; }
+.cat-list li > a { font-weight: 600; }
+.cat-list li code { font-size: .85rem; }
+.cat-list li .inline-form { margin-left: auto; }
+
 .table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
 .table th, .table td { text-align: left; padding: .6rem .8rem; border-bottom: 1px solid var(--line); }
 .badge { font-size: .78rem; padding: .15rem .5rem; border-radius: 99px; background: #eee; }
@@ -215,9 +234,13 @@ label.check input { width: auto; margin: 0; }
 @media (max-width: 800px) { .editor { grid-template-columns: 1fr; } .post-card-thumb { width: 90px; height: 64px; } }
 .editor-title { font-family: var(--serif); font-size: 1.7rem; font-weight: 700; border: 0; border-bottom: 1px solid var(--line); width: 100%; padding: .4rem 0; background: transparent; }
 .editor-subtitle { font-size: 1.05rem; color: var(--muted); border: 0; border-bottom: 1px solid var(--line); width: 100%; padding: .4rem 0; margin-top: .3rem; background: transparent; }
-.editor-toolbar { display: flex; gap: .6rem; align-items: center; margin: .8rem 0; }
+.editor-toolbar { display: flex; gap: .4rem; align-items: center; margin: .8rem 0; flex-wrap: wrap; }
 .editor-toolbar button { background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: .35rem .7rem; cursor: pointer; }
+.editor-toolbar button:hover { background: var(--paper, #f7f5f0); }
+.editor-toolbar button.fmt { min-width: 2rem; padding: .35rem .55rem; font-size: .95rem; line-height: 1; text-align: center; }
+.editor-toolbar .tb-sep { width: 1px; align-self: stretch; background: var(--line); margin: .1rem .3rem; }
 #body-md { width: 100%; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .95rem; line-height: 1.6; padding: .8rem; border: 1px solid var(--line); border-radius: 8px; resize: vertical; }
+#body-md.drag-over { border-color: var(--accent, #1a7f6b); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #1a7f6b) 20%, transparent); }
 .preview-pane { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 1rem 1.4rem; margin-top: .8rem; }
 .editor-side { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 1rem; }
 .editor-actions { display: flex; flex-direction: column; gap: .5rem; margin-top: 1rem; }

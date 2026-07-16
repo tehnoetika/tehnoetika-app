@@ -13,13 +13,16 @@ import {
 } from '../auth';
 import {
   allPostsForDashboard,
+  categoriesForPub,
   mediaForPub,
   newId,
   postById,
   pubById,
   pubsByOwner,
   subscribersForPub,
+  uniqueCategorySlug,
   uniquePostSlug,
+  type Category,
   type Media,
   type Post,
   type Publication,
@@ -89,6 +92,7 @@ const DashNav = ({ pub, active }: { pub: Publication; active: string }) => (
     {(
       [
         ['posts', 'Objave'],
+        ['categories', 'Rubrike'],
         ['media', 'Mediji'],
         ['subscribers', 'Pretplatnici'],
         ['settings', 'Postavke'],
@@ -110,11 +114,13 @@ const PostForm = ({
   pub,
   post,
   media,
+  categories,
   error,
 }: {
   pub: Publication;
   post?: Post;
   media: Media[];
+  categories: Category[];
   error?: string;
 }) => {
   const action = post ? `/dashboard/${pub.id}/posts/${post.id}` : `/dashboard/${pub.id}/posts/new`;
@@ -128,12 +134,19 @@ const PostForm = ({
           <input class="editor-title" name="title" placeholder="Naslov" required maxlength={200} value={post?.title ?? ''} />
           <input class="editor-subtitle" name="subtitle" placeholder="Podnaslov (opcionalno)" maxlength={300} value={post?.subtitle ?? ''} />
           <div class="editor-toolbar">
-            <button type="button" id="btn-upload">📎 Umetni sliku/video</button>
+            <button type="button" class="fmt" data-fmt="bold" title="Podebljano (Ctrl+B)"><strong>B</strong></button>
+            <button type="button" class="fmt" data-fmt="italic" title="Kurziv (Ctrl+I)"><em>I</em></button>
+            <button type="button" class="fmt" data-fmt="h2" title="Naslov">H</button>
+            <button type="button" class="fmt" data-fmt="quote" title="Citat">❝</button>
+            <button type="button" class="fmt" data-fmt="ul" title="Nabrajanje">☰</button>
+            <button type="button" class="fmt" data-fmt="link" title="Poveznica (Ctrl+K)">🔗</button>
+            <span class="tb-sep" aria-hidden="true"></span>
+            <button type="button" id="btn-upload">📎 Slika/video</button>
             <input type="file" id="file-input" hidden accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm" />
             <button type="button" id="btn-preview">👁 Pregled</button>
             <span id="upload-status" class="muted"></span>
           </div>
-          <textarea id="body-md" name="body_md" rows={20} placeholder={'Pišite markdown…\n\nZalijepite YouTube/Vimeo/Facebook link u zaseban red za video embed.'}>
+          <textarea id="body-md" name="body_md" rows={20} placeholder={'Pišite… označite tekst pa kliknite B/I, ili povucite/zalijepite sliku izravno.\n\nZalijepite YouTube/Vimeo/Facebook link u zaseban red za video embed.'}>
             {post?.body_md ?? ''}
           </textarea>
           <div id="preview" class="post-body preview-pane" hidden></div>
@@ -148,6 +161,17 @@ const PostForm = ({
             <select name="kind">
               <option value="post" selected={(post?.kind ?? 'post') === 'post'}>Objava</option>
               <option value="page" selected={post?.kind === 'page'}>Stranica</option>
+            </select>
+          </label>
+          <label>
+            Rubrika
+            <select name="category_id">
+              <option value="">— bez rubrike —</option>
+              {categories.map((cat) => (
+                <option value={cat.id} selected={post?.category_id === cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </label>
           <label class="check">
@@ -191,6 +215,49 @@ const PostForm = ({
     </PlatformLayout>
   );
 };
+
+const CategoriesPage = ({
+  pub,
+  categories,
+  user,
+}: {
+  pub: Publication;
+  categories: Category[];
+  user?: User | null;
+}) => (
+  <PlatformLayout title={`Rubrike — ${pub.name}`} user={user}>
+    <DashNav pub={pub} active="categories" />
+    <div class="list-head">
+      <h1>Rubrike</h1>
+      <span class="muted">Tematske sekcije za naslovnicu i navigaciju.</span>
+    </div>
+    <form method="post" action={`/dashboard/${pub.id}/categories`} class="cat-add">
+      <input name="name" placeholder="Naziv rubrike (npr. Digitalni nadzor)" required maxlength={60} />
+      <button type="submit" class="primary">+ Dodaj</button>
+    </form>
+    {categories.length === 0 ? (
+      <p class="muted">Još nema rubrika. Dodaj prvu iznad — pojavit će se u navigaciji i kao sekcija na naslovnoj.</p>
+    ) : (
+      <ul class="cat-list">
+        {categories.map((cat) => (
+          <li>
+            <a href={`/@${pub.slug}/kategorija/${cat.slug}`} target="_blank">
+              {cat.name}
+            </a>
+            <code class="muted">/{cat.slug}</code>
+            <form
+              method="post"
+              action={`/dashboard/${pub.id}/categories/${cat.id}/delete`}
+              class="inline-form"
+            >
+              <button type="submit" class="danger">Obriši</button>
+            </form>
+          </li>
+        ))}
+      </ul>
+    )}
+  </PlatformLayout>
+);
 
 // --- Registracija ruta ---
 
@@ -395,7 +462,7 @@ export function registerPlatformRoutes(app: Hono<AppEnv>) {
 
   app.get('/dashboard/:pubId/posts/new', async (c) => {
     const pub = pubOf(c);
-    return c.html(<PostForm pub={pub} media={await mediaForPub(c.env.DB, pub.id)} />);
+    return c.html(<PostForm pub={pub} media={await mediaForPub(c.env.DB, pub.id)} categories={await categoriesForPub(c.env.DB, pub.id)} />);
   });
 
   async function applyPostForm(c: C, pub: Publication, post?: Post): Promise<Response> {
@@ -411,7 +478,7 @@ export function registerPlatformRoutes(app: Hono<AppEnv>) {
 
     const title = String(body.title ?? '').trim();
     if (!title) {
-      return c.html(<PostForm pub={pub} post={post} media={await mediaForPub(c.env.DB, pub.id)} error="Naslov je obavezan." />, 400);
+      return c.html(<PostForm pub={pub} post={post} media={await mediaForPub(c.env.DB, pub.id)} categories={await categoriesForPub(c.env.DB, pub.id)} error="Naslov je obavezan." />, 400);
     }
     const subtitle = String(body.subtitle ?? '').trim();
     const bodyMd = String(body.body_md ?? '');
@@ -419,6 +486,10 @@ export function registerPlatformRoutes(app: Hono<AppEnv>) {
     const pinned = body.pinned_nav === '1' && kind === 'page' ? 1 : 0;
     const coverRaw = String(body.cover_media_id ?? '');
     const cover = coverRaw || null;
+    // Rubrika: prihvati samo id koji pripada ovoj publikaciji.
+    const catRaw = String(body.category_id ?? '');
+    const cats = await categoriesForPub(c.env.DB, pub.id);
+    const categoryId = cats.some((ct) => ct.id === catRaw) ? catRaw : null;
     const slugInput = slugify(String(body.slug ?? '')) || slugify(title);
     const slug = await uniquePostSlug(c.env.DB, pub.id, slugInput, post?.id);
     const html = renderMarkdown(bodyMd);
@@ -435,17 +506,17 @@ export function registerPlatformRoutes(app: Hono<AppEnv>) {
 
     if (post) {
       await c.env.DB.prepare(
-        `UPDATE posts SET title=?, subtitle=?, slug=?, body_md=?, body_html=?, cover_media_id=?, kind=?, pinned_nav=?, status=?, published_at=?, updated_at=? WHERE id=? AND publication_id=?`
+        `UPDATE posts SET title=?, subtitle=?, slug=?, body_md=?, body_html=?, cover_media_id=?, category_id=?, kind=?, pinned_nav=?, status=?, published_at=?, updated_at=? WHERE id=? AND publication_id=?`
       )
-        .bind(title, subtitle, slug, bodyMd, html, cover, kind, pinned, status, publishedAt, now, post.id, pub.id)
+        .bind(title, subtitle, slug, bodyMd, html, cover, categoryId, kind, pinned, status, publishedAt, now, post.id, pub.id)
         .run();
       return c.redirect(`/dashboard/${pub.id}/posts/${post.id}`);
     }
     const id = newId();
     await c.env.DB.prepare(
-      `INSERT INTO posts (id, publication_id, slug, title, subtitle, body_md, body_html, cover_media_id, kind, pinned_nav, status, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO posts (id, publication_id, slug, title, subtitle, body_md, body_html, cover_media_id, category_id, kind, pinned_nav, status, published_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-      .bind(id, pub.id, slug, title, subtitle, bodyMd, html, cover, kind, pinned, status, publishedAt)
+      .bind(id, pub.id, slug, title, subtitle, bodyMd, html, cover, categoryId, kind, pinned, status, publishedAt)
       .run();
     return c.redirect(`/dashboard/${pub.id}/posts/${id}`);
   }
@@ -456,7 +527,7 @@ export function registerPlatformRoutes(app: Hono<AppEnv>) {
     const pub = pubOf(c);
     const post = await postById(c.env.DB, pub.id, c.req.param('id'));
     if (!post) return c.notFound();
-    return c.html(<PostForm pub={pub} post={post} media={await mediaForPub(c.env.DB, pub.id)} />);
+    return c.html(<PostForm pub={pub} post={post} media={await mediaForPub(c.env.DB, pub.id)} categories={await categoriesForPub(c.env.DB, pub.id)} />);
   });
 
   app.post('/dashboard/:pubId/posts/:id', async (c) => {
@@ -464,6 +535,42 @@ export function registerPlatformRoutes(app: Hono<AppEnv>) {
     const post = await postById(c.env.DB, pub.id, c.req.param('id'));
     if (!post) return c.notFound();
     return applyPostForm(c, pub, post);
+  });
+
+  // --- Rubrike (kategorije) ---
+  app.get('/dashboard/:pubId/categories', async (c) => {
+    const pub = pubOf(c);
+    const cats = await categoriesForPub(c.env.DB, pub.id);
+    return c.html(<CategoriesPage pub={pub} categories={cats} user={c.get('user')} />);
+  });
+
+  app.post('/dashboard/:pubId/categories', async (c) => {
+    const pub = pubOf(c);
+    const body = await c.req.parseBody();
+    const name = String(body.name ?? '').trim().slice(0, 60);
+    if (name) {
+      const slug = await uniqueCategorySlug(c.env.DB, pub.id, slugify(name));
+      const cats = await categoriesForPub(c.env.DB, pub.id);
+      await c.env.DB.prepare(
+        'INSERT INTO categories (id, publication_id, name, slug, position) VALUES (?, ?, ?, ?, ?)'
+      )
+        .bind(newId(), pub.id, name, slug, cats.length)
+        .run();
+    }
+    return c.redirect(`/dashboard/${pub.id}/categories`);
+  });
+
+  app.post('/dashboard/:pubId/categories/:id/delete', async (c) => {
+    const pub = pubOf(c);
+    const id = c.req.param('id');
+    // Odveži postove pa obriši rubriku (bez brisanja objava).
+    await c.env.DB.prepare('UPDATE posts SET category_id = NULL WHERE category_id = ? AND publication_id = ?')
+      .bind(id, pub.id)
+      .run();
+    await c.env.DB.prepare('DELETE FROM categories WHERE id = ? AND publication_id = ?')
+      .bind(id, pub.id)
+      .run();
+    return c.redirect(`/dashboard/${pub.id}/categories`);
   });
 
   // --- Mediji ---

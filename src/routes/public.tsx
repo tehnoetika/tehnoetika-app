@@ -3,14 +3,19 @@
 // path mode ('/@:pubslug'), s istim handlerima — vidi docs/SPEC.md §3.
 import type { Context, Hono, Next } from 'hono';
 import {
+  categoriesForPub,
+  categoryBySlug,
   navPages,
   postBySlug,
   publishedPostCount,
+  publishedPostCountByCategory,
   publishedPosts,
+  publishedPostsByCategory,
   pubBySlug,
   newId,
   newToken,
   type Bindings,
+  type Category,
   type Post,
 } from '../db';
 import { emailEnabled, sendEmail } from '../email';
@@ -56,43 +61,101 @@ function coverUrl(post: Post): string | null {
 }
 
 async function homePage(c: C, t: TenantCtx) {
-  const [posts, pages] = await Promise.all([
+  const cats = t.categories ?? [];
+  const [posts, pages, sectionResults] = await Promise.all([
     publishedPosts(c.env.DB, t.pub.id, 11),
     navPages(c.env.DB, t.pub.id),
+    // Za svaku rubriku dohvati najnovija 4 posta (paralelno).
+    Promise.all(cats.map((cat) => publishedPostsByCategory(c.env.DB, t.pub.id, cat.id, 4))),
   ]);
   const [hero, ...rest] = posts;
   const latest = rest.slice(0, 7);
+  // Sekcije: rubrike koje imaju objava (First Things stil).
+  const sections = cats
+    .map((cat, i) => ({ cat, posts: sectionResults[i] }))
+    .filter((s) => s.posts.length > 0);
   return c.html(
     <TenantLayout tenant={t} pages={pages}>
       {hero ? (
-        <div class="home">
-          <article class="hero">
-            {coverUrl(hero) ? <img class="hero-cover" src={coverUrl(hero)!} alt="" /> : null}
-            <h2>
-              <a href={`${t.base}/p/${hero.slug}`}>{hero.title}</a>
-            </h2>
-            {hero.subtitle ? <p class="hero-subtitle">{hero.subtitle}</p> : null}
-            <time>{formatDate(hero.published_at)}</time>
-          </article>
-          {latest.length > 0 ? (
-            <aside class="home-latest">
-              <h2 class="section-label">Najnovije</h2>
-              <ol class="latest">
-                {latest.map((p) => (
-                  <LatestItem tenant={t} post={p} />
+        <>
+          <div class="home">
+            <article class="hero">
+              {coverUrl(hero) ? <img class="hero-cover" src={coverUrl(hero)!} alt="" /> : null}
+              <h2>
+                <a href={`${t.base}/p/${hero.slug}`}>{hero.title}</a>
+              </h2>
+              {hero.subtitle ? <p class="hero-subtitle">{hero.subtitle}</p> : null}
+              <time>{formatDate(hero.published_at)}</time>
+            </article>
+            {latest.length > 0 ? (
+              <aside class="home-latest">
+                <h2 class="section-label">Najnovije</h2>
+                <ol class="latest">
+                  {latest.map((p) => (
+                    <LatestItem tenant={t} post={p} />
+                  ))}
+                </ol>
+                {posts.length > 8 ? (
+                  <p class="more">
+                    <a href={`${t.base}/archive`}>Cijela arhiva →</a>
+                  </p>
+                ) : null}
+              </aside>
+            ) : null}
+          </div>
+          {sections.map((s) => (
+            <section class="home-section">
+              <h2 class="section-label">
+                <a href={`${t.base}/kategorija/${s.cat.slug}`}>{s.cat.name}</a>
+              </h2>
+              <div class="section-grid">
+                {s.posts.map((p) => (
+                  <PostCard tenant={t} post={p} coverUrl={coverUrl(p)} />
                 ))}
-              </ol>
-              {posts.length > 8 ? (
-                <p class="more">
-                  <a href={`${t.base}/archive`}>Cijela arhiva →</a>
-                </p>
-              ) : null}
-            </aside>
-          ) : null}
-        </div>
+              </div>
+            </section>
+          ))}
+        </>
       ) : (
         <p class="empty">Još nema objava.</p>
       )}
+    </TenantLayout>
+  );
+}
+
+async function categoryPage(c: C, t: TenantCtx) {
+  const catSlug = c.req.param('catslug' as never) as string;
+  const cat = await categoryBySlug(c.env.DB, t.pub.id, catSlug);
+  if (!cat) return c.notFound();
+  const page = Math.max(1, parseInt(c.req.query('page') ?? '1', 10) || 1);
+  const [posts, total, pages] = await Promise.all([
+    publishedPostsByCategory(c.env.DB, t.pub.id, cat.id, PAGE_SIZE, (page - 1) * PAGE_SIZE),
+    publishedPostCountByCategory(c.env.DB, t.pub.id, cat.id),
+    navPages(c.env.DB, t.pub.id),
+  ]);
+  const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  return c.html(
+    <TenantLayout tenant={t} pages={pages} title={cat.name}>
+      <div class="reading-col">
+        <h1 class="page-title">{cat.name}</h1>
+        <section class="post-list">
+          {posts.map((p) => (
+            <PostCard tenant={t} post={p} coverUrl={coverUrl(p)} />
+          ))}
+          {posts.length === 0 ? <p class="empty">Nema objava u ovoj rubrici.</p> : null}
+        </section>
+        <nav class="pagination">
+          {page > 1 ? <a href={`${t.base}/kategorija/${cat.slug}?page=${page - 1}`}>← Novije</a> : <span />}
+          <span>
+            {page} / {lastPage}
+          </span>
+          {page < lastPage ? (
+            <a href={`${t.base}/kategorija/${cat.slug}?page=${page + 1}`}>Starije →</a>
+          ) : (
+            <span />
+          )}
+        </nav>
+      </div>
     </TenantLayout>
   );
 }
@@ -328,6 +391,7 @@ type Handler = (c: C, t: TenantCtx) => Promise<Response>;
 const routes: Array<['get' | 'post', string, Handler]> = [
   ['get', '/', homePage],
   ['get', '/archive', archivePage],
+  ['get', '/kategorija/:catslug', categoryPage],
   ['get', '/p/:slug', postPage],
   ['get', '/about', aboutPage],
   ['get', '/feed.xml', feedXml],
@@ -342,6 +406,8 @@ export function registerTenantRoutes(app: Hono<AppEnv>) {
   const wrap = (fn: Handler) => async (c: C, next: Next) => {
     const t = await resolveTenant(c);
     if (!t) return next();
+    // Rubrike za navigaciju (jedan upit po tenant-stranici).
+    t.categories = await categoriesForPub(c.env.DB, t.pub.id);
     return fn(c, t);
   };
   // Hono ne podržava parcijalne segmente ('/@:param'), pa '@' ulazi u regex parametra.

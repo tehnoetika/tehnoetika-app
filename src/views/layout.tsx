@@ -1,5 +1,5 @@
 import type { Child, FC } from 'hono/jsx';
-import type { Post, Publication, User } from '../db';
+import type { Category, Post, Publication, User } from '../db';
 
 export type TenantCtx = {
   pub: Publication;
@@ -7,6 +7,8 @@ export type TenantCtx = {
   base: string;
   /** Apsolutna baza za RSS/OG/emails, npr. https://tehnoetika.example.com ili https://app.hr/@tehnoetika */
   absBase: string;
+  /** Rubrike publikacije (za navigaciju) — popunjava se u tenant wrap-u. */
+  categories?: Category[];
 };
 
 export function formatDate(iso: string | null, locale = 'hr-HR'): string {
@@ -36,6 +38,12 @@ const Head: FC<{ title: string; description?: string; ogImage?: string; accent?:
     {description ? <meta property="og:description" content={description} /> : null}
     {ogImage ? <meta property="og:image" content={ogImage} /> : null}
     {feedUrl ? <link rel="alternate" type="application/rss+xml" title={title} href={feedUrl} /> : null}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+    />
     <link rel="stylesheet" href="/static/style.css" />
     {accent ? <style>{`:root{--accent:${accent.replace(/[^#a-zA-Z0-9(),.% -]/g, '')}}`}</style> : null}
   </head>
@@ -68,6 +76,9 @@ export const TenantLayout: FC<{
           {pub.tagline ? <p class="site-tagline">{pub.tagline}</p> : null}
           <nav class="site-nav">
             <a href={`${base}/`}>Početna</a>
+            {(tenant.categories ?? []).map((cat) => (
+              <a href={`${base}/kategorija/${cat.slug}`}>{cat.name}</a>
+            ))}
             <a href={`${base}/archive`}>Arhiva</a>
             {pages.map((p) => (
               <a href={`${base}/p/${p.slug}`}>{p.title}</a>
