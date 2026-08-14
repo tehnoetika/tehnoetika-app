@@ -4,6 +4,8 @@
 
 Konsolidirano iz tri research izvještaja (2026-07-11): analiza Substack profila, MVP feature set open-source alternativa, Cloudflare arhitektura.
 
+**Vezani dokumenti:** [PLAN-tehnoetika-site.md](PLAN-tehnoetika-site.md) — gap analiza i plan razvoja institucionalne stranice Savjeta (6 rubrika, tipovi sadržaja, izbornik, editor), s odlukama potvrđenim 2026-08-15.
+
 ---
 
 ## 1. Što gradimo
