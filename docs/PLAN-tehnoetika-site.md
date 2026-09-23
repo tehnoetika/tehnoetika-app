@@ -174,7 +174,9 @@ Otvorena pitanja su zatvorena ovako: stranica ide na postojeću publikaciju **`s
 | 1 — PDF | `media.kind = 'file'` (PDF do 25 MB), `posts.attachment_media_id`, `?download=1` | `src/routes/api.ts`, `src/routes/media.ts` |
 | 2 — editor | toolbar u dva reda, plutajuća traka na označenom tekstu, dijalog za sliku (knjižnica/upload, opis, poravnanje), video dijalog, fusnote, istaknuti citat, tablica, pregled uživo, autosave u preglednik, brojač riječi; tipografski preseti + veličina teksta u Postavkama | `public/static/dashboard.js`, `src/markdown.ts`, `src/views/layout.tsx` |
 | 3 — naslovnica | `home_layout = 'institution'`: uvod → istaknuto → tekstovi + nadolazeće aktivnosti → video → projekti; mobilni izbornik; podnožje (markdown) | `src/routes/public.tsx`, `public/static/style.css` |
-| 4 — sadržaj | uvezeno 9 objava s `tehnoetika.substack.com` (8 tekstova + Deklaracija kao stranica s PDF-om); predstavljanje Savjeta → "O nama"; logo štita; robots.txt, canonical, OG | jednokratna skripta (izvan repoa) |
+| 4 — sadržaj | uvezeno 9 objava s `tehnoetika.substack.com` (8 tekstova + Deklaracija kao stranica s PDF-om); predstavljanje Savjeta → "O nama"; logo štita; robots.txt, canonical, OG | `scripts/substack-import/` |
 | Više urednika | `publication_members` + dashboard **Urednici** (dodaje/uklanja vlasnik; urednik se mora prvo prijaviti) | `src/db.ts` `canEditPub` |
+
+Postupak uvoza, zamke i otvorene stavke: [2026-09-23-institucionalna-stranica.md](2026-09-23-institucionalna-stranica.md).
 
 Namjerno i dalje izvan opsega: R2 video player (§3.1, model spreman: `video_source`), RSVP, potpisnici, slanje newslettera.

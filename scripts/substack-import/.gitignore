@@ -1,0 +1,6 @@
+# Podaci uvoza (preuzeti JSON-ovi, slike, PDF, generirani SQL) ne idu u git.
+*.json
+*.sql
+*.pdf
+img/
+md.mjs
