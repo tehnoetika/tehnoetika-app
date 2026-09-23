@@ -45,6 +45,9 @@
   "routes": [
     { "pattern": "tehnoetika.com", "custom_domain": true },
     { "pattern": "www.tehnoetika.com", "custom_domain": true },
+    // Institucionalna stranica Savjeta (publikacija `savjet`, custom_domain u postavkama).
+    // Zona domovina.ai je u istom računu (D.O.M.), pa wrangler sam radi DNS + cert.
+    { "pattern": "tehnoetika.domovina.ai", "custom_domain": true },
     { "pattern": "*.tehnoetika.com/*", "zone_name": "tehnoetika.com" }
   ]
   // Opcionalni secret za slanje emailova (double opt-in): wrangler secret put RESEND_API_KEY

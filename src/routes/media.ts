@@ -31,7 +31,12 @@ export function registerMediaRoutes(app: Hono<AppEnv>) {
       'Content-Type': media.mime_type,
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'public, max-age=31536000, immutable',
+      'X-Content-Type-Options': 'nosniff',
     });
+    // ?download=1 → preuzimanje (PDF Deklaracije) umjesto prikaza u pregledniku.
+    if (c.req.query('download') === '1') {
+      headers.set('Content-Disposition', `attachment; filename="${media.filename.replace(/["\\\r\n]/g, '')}"`);
+    }
 
     const range = parseRange(c.req.header('range'), media.byte_size);
     if (range) {

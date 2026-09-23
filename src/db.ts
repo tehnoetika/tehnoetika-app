@@ -34,8 +34,15 @@ export type Publication = {
   accent_color: string;
   custom_domain: string | null;
   locale: string;
+  home_layout: 'blog' | 'institution';
+  font_preset: string;
+  text_size: string;
+  footer_md: string;
+  footer_html: string;
   created_at: string;
 };
+
+export type PostType = 'text' | 'event' | 'video' | 'project';
 
 export type Post = {
   id: string;
@@ -51,6 +58,16 @@ export type Post = {
   visibility: string;
   pinned_nav: number;
   category_id: string | null;
+  post_type: PostType;
+  event_start: string | null;
+  event_end: string | null;
+  event_location: string | null;
+  link_url: string | null;
+  video_source: string | null;
+  video_url: string | null;
+  project_status: string | null;
+  attachment_media_id: string | null;
+  featured: number;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -65,10 +82,28 @@ export type Category = {
   created_at: string;
 };
 
+export type NavItem = {
+  id: string;
+  publication_id: string;
+  label: string;
+  target: string;
+  position: number;
+  visible: number;
+};
+
+export type Member = {
+  publication_id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  email: string;
+  name: string;
+};
+
 export type Media = {
   id: string;
   publication_id: string;
-  kind: 'image' | 'video';
+  kind: 'image' | 'video' | 'file';
   storage_key: string;
   filename: string;
   mime_type: string;
@@ -119,6 +154,37 @@ export async function pubsByOwner(db: D1Database, userId: string): Promise<Publi
   return r.results;
 }
 
+/** Publikacije koje korisnik smije uređivati: vlastite + one gdje je urednik. */
+export async function pubsForUser(db: D1Database, userId: string): Promise<Publication[]> {
+  const r = await db
+    .prepare(
+      'SELECT * FROM publications WHERE owner_user_id = ? OR id IN (SELECT publication_id FROM publication_members WHERE user_id = ?) ORDER BY created_at'
+    )
+    .bind(userId, userId)
+    .all<Publication>();
+  return r.results;
+}
+
+/** Smije li korisnik uređivati publikaciju (vlasnik ili urednik). */
+export async function canEditPub(db: D1Database, pub: Publication, userId: string): Promise<boolean> {
+  if (pub.owner_user_id === userId) return true;
+  const row = await db
+    .prepare('SELECT 1 AS ok FROM publication_members WHERE publication_id = ? AND user_id = ?')
+    .bind(pub.id, userId)
+    .first();
+  return Boolean(row);
+}
+
+export async function membersForPub(db: D1Database, pubId: string): Promise<Member[]> {
+  const r = await db
+    .prepare(
+      'SELECT m.*, u.email, u.name FROM publication_members m JOIN users u ON u.id = m.user_id WHERE m.publication_id = ? ORDER BY m.created_at'
+    )
+    .bind(pubId)
+    .all<Member>();
+  return r.results;
+}
+
 export async function allPublications(db: D1Database): Promise<Publication[]> {
   const r = await db.prepare('SELECT * FROM publications ORDER BY created_at').all<Publication>();
   return r.results;
@@ -126,27 +192,87 @@ export async function allPublications(db: D1Database): Promise<Publication[]> {
 
 // --- Posts ---
 
+/** Objavljeni postovi jednog tipa (default: tekstovi), najnoviji prvo. */
 export async function publishedPosts(
   db: D1Database,
   pubId: string,
   limit: number,
-  offset = 0
+  offset = 0,
+  type: PostType = 'text'
 ): Promise<Post[]> {
   const r = await db
     .prepare(
-      "SELECT * FROM posts WHERE publication_id = ? AND status = 'published' AND kind = 'post' ORDER BY published_at DESC LIMIT ? OFFSET ?"
+      "SELECT * FROM posts WHERE publication_id = ? AND status = 'published' AND kind = 'post' AND post_type = ? ORDER BY published_at DESC LIMIT ? OFFSET ?"
     )
-    .bind(pubId, limit, offset)
+    .bind(pubId, type, limit, offset)
     .all<Post>();
   return r.results;
 }
 
-export async function publishedPostCount(db: D1Database, pubId: string): Promise<number> {
+export async function publishedPostCount(db: D1Database, pubId: string, type: PostType = 'text'): Promise<number> {
   const row = await db
-    .prepare("SELECT COUNT(*) AS n FROM posts WHERE publication_id = ? AND status = 'published' AND kind = 'post'")
-    .bind(pubId)
+    .prepare(
+      "SELECT COUNT(*) AS n FROM posts WHERE publication_id = ? AND status = 'published' AND kind = 'post' AND post_type = ?"
+    )
+    .bind(pubId, type)
     .first<{ n: number }>();
   return row?.n ?? 0;
+}
+
+/** Svi objavljeni postovi svih tipova (RSS). */
+export async function publishedAllTypes(db: D1Database, pubId: string, limit: number): Promise<Post[]> {
+  const r = await db
+    .prepare(
+      "SELECT * FROM posts WHERE publication_id = ? AND status = 'published' AND kind = 'post' ORDER BY published_at DESC LIMIT ?"
+    )
+    .bind(pubId, limit)
+    .all<Post>();
+  return r.results;
+}
+
+/** Događaji: nadolazeći (uzlazno) ili održani (silazno) u odnosu na lokalno "sada". */
+export async function publishedEvents(
+  db: D1Database,
+  pubId: string,
+  when: 'upcoming' | 'past',
+  nowLocal: string,
+  limit = 100
+): Promise<Post[]> {
+  // Događaj je nadolazeći dok ne završi (event_end, inače event_start).
+  const sql =
+    when === 'upcoming'
+      ? "SELECT * FROM posts WHERE publication_id = ? AND status = 'published' AND kind = 'post' AND post_type = 'event' AND COALESCE(event_end, event_start, '') >= ? ORDER BY event_start ASC LIMIT ?"
+      : "SELECT * FROM posts WHERE publication_id = ? AND status = 'published' AND kind = 'post' AND post_type = 'event' AND COALESCE(event_end, event_start, '') < ? ORDER BY event_start DESC LIMIT ?";
+  const r = await db.prepare(sql).bind(pubId, nowLocal, limit).all<Post>();
+  return r.results;
+}
+
+export async function featuredPosts(db: D1Database, pubId: string): Promise<Post[]> {
+  const r = await db
+    .prepare(
+      "SELECT * FROM posts WHERE publication_id = ? AND status = 'published' AND featured = 1 ORDER BY published_at DESC LIMIT 3"
+    )
+    .bind(pubId)
+    .all<Post>();
+  return r.results;
+}
+
+/** Objavljena stranica (kind = 'page') po slugu — za lijepe URL-ove /:slug. */
+export async function pageBySlug(db: D1Database, pubId: string, slug: string): Promise<Post | null> {
+  return db
+    .prepare("SELECT * FROM posts WHERE publication_id = ? AND slug = ? AND kind = 'page' AND status = 'published'")
+    .bind(pubId, slug)
+    .first<Post>();
+}
+
+// --- Izbornik ---
+
+export async function navItems(db: D1Database, pubId: string): Promise<NavItem[]> {
+  const r = await db
+    .prepare('SELECT * FROM nav_items WHERE publication_id = ? ORDER BY position, rowid')
+    .bind(pubId)
+    .all<NavItem>();
+  return r.results;
 }
 
 export async function navPages(db: D1Database, pubId: string): Promise<Post[]> {
@@ -173,13 +299,18 @@ export async function postById(db: D1Database, pubId: string, id: string): Promi
     .first<Post>();
 }
 
-export async function allPostsForDashboard(db: D1Database, pubId: string): Promise<Post[]> {
-  const r = await db
-    .prepare(
-      'SELECT * FROM posts WHERE publication_id = ? ORDER BY COALESCE(published_at, updated_at) DESC'
-    )
-    .bind(pubId)
-    .all<Post>();
+export async function allPostsForDashboard(db: D1Database, pubId: string, type?: string): Promise<Post[]> {
+  const r = type
+    ? await db
+        .prepare(
+          "SELECT * FROM posts WHERE publication_id = ? AND (post_type = ? OR (? = 'page' AND kind = 'page')) AND (? = 'page' OR kind = 'post') ORDER BY COALESCE(published_at, updated_at) DESC"
+        )
+        .bind(pubId, type, type, type)
+        .all<Post>()
+    : await db
+        .prepare('SELECT * FROM posts WHERE publication_id = ? ORDER BY COALESCE(published_at, updated_at) DESC')
+        .bind(pubId)
+        .all<Post>();
   return r.results;
 }
 

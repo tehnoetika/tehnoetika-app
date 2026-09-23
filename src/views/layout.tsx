@@ -1,5 +1,5 @@
 import type { Child, FC } from 'hono/jsx';
-import type { Category, Post, Publication, User } from '../db';
+import type { Category, NavItem, Post, Publication, User } from '../db';
 
 export type TenantCtx = {
   pub: Publication;
@@ -9,7 +9,64 @@ export type TenantCtx = {
   absBase: string;
   /** Rubrike publikacije (za navigaciju) — popunjava se u tenant wrap-u. */
   categories?: Category[];
+  /** Uređeni izbornik; prazan = automatski izbornik. */
+  nav?: NavItem[];
+  /** Stranice (kind = 'page') prikvačene u izbornik. */
+  pages?: Post[];
 };
+
+/** Putanje koje zauzimaju javne rute — stranica s takvim slugom ostaje na /p/:slug. */
+export const TENANT_RESERVED = [
+  'p', 'tekstovi', 'aktivnosti', 'video', 'projekti', 'o-nama', 'kategorija', 'archive', 'about',
+  'feed.xml', 'sitemap.xml', 'robots.txt', 'subscribe', 'confirm', 'unsubscribe', 'media', 'api',
+  'static', 'dashboard', 'auth', 'prijava',
+];
+
+/** URL objave/stranice: stranice dobivaju lijepi /:slug, sve ostalo /p/:slug. */
+export function postHref(base: string, post: Pick<Post, 'slug' | 'kind'>): string {
+  return post.kind === 'page' && !TENANT_RESERVED.includes(post.slug) ? `${base}/${post.slug}` : `${base}/p/${post.slug}`;
+}
+
+/** Tipografski preseti publikacije: Google Fonts upit + CSS varijable. */
+export const FONT_PRESETS: Record<string, { label: string; query: string; body: string; display: string }> = {
+  lora: {
+    label: 'Lora + Spectral (klasični esej)',
+    query: 'family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400',
+    body: "'Lora'",
+    display: "'Spectral', 'Lora'",
+  },
+  playfair: {
+    label: 'Source Serif + Playfair Display (svečano)',
+    query: 'family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Playfair+Display:ital,wght@0,500;0,600;1,500',
+    body: "'Source Serif 4'",
+    display: "'Playfair Display'",
+  },
+  newsreader: {
+    label: 'Newsreader + Inter (moderno)',
+    query: 'family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@500;600;700',
+    body: "'Newsreader'",
+    display: "'Inter'",
+  },
+};
+
+export const TEXT_SIZES: Record<string, { label: string; size: string }> = {
+  s: { label: 'Manji', size: '1.12rem' },
+  m: { label: 'Srednji', size: '1.25rem' },
+  l: { label: 'Veći', size: '1.38rem' },
+};
+
+function fontStyle(pub: Publication): string {
+  const preset = FONT_PRESETS[pub.font_preset] ?? FONT_PRESETS.lora;
+  const size = (TEXT_SIZES[pub.text_size] ?? TEXT_SIZES.m).size;
+  return `:root{--serif:${preset.body},Georgia,'Times New Roman',serif;--serif-display:${preset.display},Georgia,serif;--body-size:${size}}`;
+}
+
+/** Link unutar publikacije ('/aktivnosti' → base + putanja) ili vanjski URL. */
+export function navHref(base: string, target: string): string {
+  if (/^https?:\/\//.test(target)) return target;
+  const path = target.startsWith('/') ? target : `/${target}`;
+  return path === '/' ? `${base}/` : `${base}${path}`;
+}
 
 export function formatDate(iso: string | null, locale = 'hr-HR'): string {
   if (!iso) return '';
@@ -22,19 +79,26 @@ export function mediaUrl(mediaId: string, filename: string): string {
   return `/media/${mediaId}/${encodeURIComponent(filename)}`;
 }
 
-const Head: FC<{ title: string; description?: string; ogImage?: string; accent?: string; feedUrl?: string }> = ({
-  title,
-  description,
-  ogImage,
-  accent,
-  feedUrl,
-}) => (
+const Head: FC<{
+  title: string;
+  description?: string;
+  ogImage?: string;
+  accent?: string;
+  feedUrl?: string;
+  fontQuery?: string;
+  extraStyle?: string;
+  canonical?: string;
+}> = ({ title, description, ogImage, accent, feedUrl, fontQuery, extraStyle, canonical }) => (
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     {description ? <meta name="description" content={description} /> : null}
     <meta property="og:title" content={title} />
+    <meta property="og:type" content="website" />
+    {canonical ? <link rel="canonical" href={canonical} /> : null}
+    {canonical ? <meta property="og:url" content={canonical} /> : null}
+    {ogImage ? <meta name="twitter:card" content="summary_large_image" /> : null}
     {description ? <meta property="og:description" content={description} /> : null}
     {ogImage ? <meta property="og:image" content={ogImage} /> : null}
     {feedUrl ? <link rel="alternate" type="application/rss+xml" title={title} href={feedUrl} /> : null}
@@ -42,10 +106,12 @@ const Head: FC<{ title: string; description?: string; ogImage?: string; accent?:
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap"
+      href={`https://fonts.googleapis.com/css2?${fontQuery ?? FONT_PRESETS.lora.query}&display=swap`}
     />
     <link rel="stylesheet" href="/static/style.css" />
     {accent ? <style>{`:root{--accent:${accent.replace(/[^#a-zA-Z0-9(),.% -]/g, '')}}`}</style> : null}
+    {/* Samo vrijednosti iz FONT_PRESETS/TEXT_SIZES (bez korisničkog unosa) — sirovo, jer JSX escapea navodnike. */}
+    {extraStyle ? <style dangerouslySetInnerHTML={{ __html: extraStyle }} /> : null}
   </head>
 );
 
@@ -55,42 +121,66 @@ export const TenantLayout: FC<{
   title?: string;
   description?: string;
   ogImage?: string;
+  canonical?: string;
   children: Child;
-}> = ({ tenant, pages, title, description, ogImage, children }) => {
+}> = ({ tenant, pages, title, description, ogImage, canonical, children }) => {
   const { pub, base } = tenant;
+  const nav = (tenant.nav ?? []).filter((n) => n.visible);
   return (
     <html lang={pub.locale}>
       <Head
         title={title ? `${title} — ${pub.name}` : pub.name}
         description={description ?? pub.tagline}
-        ogImage={ogImage}
+        ogImage={ogImage ?? (pub.logo_media_id ? `${tenant.absBase.replace(/\/@[^/]+$/, '')}/media/${pub.logo_media_id}/logo` : undefined)}
         accent={pub.accent_color}
         feedUrl={`${base}/feed.xml`}
+        fontQuery={(FONT_PRESETS[pub.font_preset] ?? FONT_PRESETS.lora).query}
+        extraStyle={fontStyle(pub)}
+        canonical={canonical}
       />
-      <body class="tenant">
+      <body class={`tenant layout-${pub.home_layout}`}>
         <header class="site-header">
           <a class="site-identity" href={`${base}/`}>
             {pub.logo_media_id ? <img class="site-logo" src={`/media/${pub.logo_media_id}/logo`} alt="" /> : null}
             <span class="site-name">{pub.name}</span>
           </a>
           {pub.tagline ? <p class="site-tagline">{pub.tagline}</p> : null}
-          <nav class="site-nav">
-            <a href={`${base}/`}>Početna</a>
-            {(tenant.categories ?? []).map((cat) => (
-              <a href={`${base}/kategorija/${cat.slug}`}>{cat.name}</a>
-            ))}
-            <a href={`${base}/archive`}>Arhiva</a>
-            {pages.map((p) => (
-              <a href={`${base}/p/${p.slug}`}>{p.title}</a>
-            ))}
-            <a href={`${base}/about`}>O nama</a>
+          <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true" />
+          <label for="nav-toggle" class="nav-toggle-label">
+            <span aria-hidden="true">☰</span> Izbornik
+          </label>
+          <nav class="site-nav" aria-label="Glavni izbornik">
+            {nav.length > 0 ? (
+              nav.map((n) =>
+                /^https?:\/\//.test(n.target) ? (
+                  <a href={n.target} rel="noopener" target="_blank">
+                    {n.label}
+                  </a>
+                ) : (
+                  <a href={navHref(base, n.target)}>{n.label}</a>
+                )
+              )
+            ) : (
+              <>
+                <a href={`${base}/`}>Početna</a>
+                {(tenant.categories ?? []).map((cat) => (
+                  <a href={`${base}/kategorija/${cat.slug}`}>{cat.name}</a>
+                ))}
+                <a href={`${base}/tekstovi`}>Arhiva</a>
+                {pages.map((p) => (
+                  <a href={postHref(base, p)}>{p.title}</a>
+                ))}
+                <a href={`${base}/o-nama`}>O nama</a>
+              </>
+            )}
           </nav>
         </header>
         <main>{children}</main>
         <footer class="site-footer">
           <SubscribeForm tenant={tenant} />
+          {pub.footer_html ? <div class="footer-info" dangerouslySetInnerHTML={{ __html: pub.footer_html }} /> : null}
           <p class="footer-meta">
-            <a href={`${base}/feed.xml`}>RSS</a> · Pokreće <a href="/">otvorena platforma</a>
+            <a href={`${base}/feed.xml`}>RSS</a> · Pokreće <a href="https://tehnoetika.com/">otvorena platforma</a>
           </p>
         </footer>
       </body>
@@ -115,10 +205,11 @@ export const LatestItem: FC<{ tenant: TenantCtx; post: Post }> = ({ tenant, post
   </li>
 );
 
-export const PostCard: FC<{ tenant: TenantCtx; post: Post; coverUrl?: string | null }> = ({
+export const PostCard: FC<{ tenant: TenantCtx; post: Post; coverUrl?: string | null; meta?: Child }> = ({
   tenant,
   post,
   coverUrl,
+  meta,
 }) => (
   <article class="post-card">
     <div class="post-card-text">
@@ -126,7 +217,7 @@ export const PostCard: FC<{ tenant: TenantCtx; post: Post; coverUrl?: string | n
         <a href={`${tenant.base}/p/${post.slug}`}>{post.title}</a>
       </h3>
       {post.subtitle ? <p class="post-card-subtitle">{post.subtitle}</p> : null}
-      <time>{formatDate(post.published_at)}</time>
+      {meta ?? <time>{formatDate(post.published_at)}</time>}
     </div>
     {coverUrl ? <img class="post-card-thumb" src={coverUrl} alt="" loading="lazy" /> : null}
   </article>

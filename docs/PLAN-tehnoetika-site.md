@@ -147,7 +147,7 @@ Alternativa (ako Luka traži pravi WYSIWYG): TipTap/ProseMirror, novi stupac `bo
 
 ---
 
-## 4. Odluke (Lukin feedback, 2026-08-15)
+## 4. Odluke (Lukin feedback, 2026-08-14)
 
 | Pitanje | Odluka | Posljedica za plan |
 |---|---|---|
@@ -162,7 +162,19 @@ Alternativa (ako Luka traži pravi WYSIWYG): TipTap/ProseMirror, novi stupac `bo
 
 Više admina po publikaciji (`publication_members` + role) · vlastito hostanje videa na R2 s HTML5 playerom (§3.1) · slanje newslettera pretplatnicima · prijave na događaje (RSVP) · prikupljanje potpisa za Deklaraciju · tražilica · engleska verzija Deklaracije.
 
-## 6. Još otvoreno
+## 6. Stanje implementacije (2026-09-23)
 
-1. Ide li stranica na postojeću publikaciju `savjet` ili otvaramo novu (`tehnoetika`)?
-2. Tko drži zonu `domovina.ai` (koji Cloudflare račun) — određuje put u Fazi 0.
+Otvorena pitanja su zatvorena ovako: stranica ide na postojeću publikaciju **`savjet`** (Lukin račun), a zona `domovina.ai` je u računu D.O.M., pa je `tehnoetika.domovina.ai` običan Worker `custom_domain` (bez Cloudflare for SaaS). Stranica je dostupna i na `savjet.tehnoetika.com`.
+
+| Faza | Stanje | Gdje u kodu |
+|---|---|---|
+| 0 — domena | `tehnoetika.domovina.ai` → publikacija `savjet` | `wrangler.jsonc` routes, `publications.custom_domain` |
+| 1 — tipovi sadržaja | `post_type` text/event/video/project; `/tekstovi` (+ `?rubrika=`), `/aktivnosti` (nadolazeće/održano, `.ics`), `/video`, `/projekti`, `/o-nama`, stranice na `/:slug`; stari URL-ovi 301 | `migrations/0003_institution.sql`, `src/routes/public.tsx`, `src/events.ts` |
+| 1 — izbornik | tablica `nav_items`, dashboard **Izbornik** (naziv, redoslijed, vidljivost, preset od 6 rubrika); prazno = automatski izbornik | `src/routes/dashboard.tsx` |
+| 1 — PDF | `media.kind = 'file'` (PDF do 25 MB), `posts.attachment_media_id`, `?download=1` | `src/routes/api.ts`, `src/routes/media.ts` |
+| 2 — editor | toolbar u dva reda, plutajuća traka na označenom tekstu, dijalog za sliku (knjižnica/upload, opis, poravnanje), video dijalog, fusnote, istaknuti citat, tablica, pregled uživo, autosave u preglednik, brojač riječi; tipografski preseti + veličina teksta u Postavkama | `public/static/dashboard.js`, `src/markdown.ts`, `src/views/layout.tsx` |
+| 3 — naslovnica | `home_layout = 'institution'`: uvod → istaknuto → tekstovi + nadolazeće aktivnosti → video → projekti; mobilni izbornik; podnožje (markdown) | `src/routes/public.tsx`, `public/static/style.css` |
+| 4 — sadržaj | uvezeno 9 objava s `tehnoetika.substack.com` (8 tekstova + Deklaracija kao stranica s PDF-om); predstavljanje Savjeta → "O nama"; logo štita; robots.txt, canonical, OG | jednokratna skripta (izvan repoa) |
+| Više urednika | `publication_members` + dashboard **Urednici** (dodaje/uklanja vlasnik; urednik se mora prvo prijaviti) | `src/db.ts` `canEditPub` |
+
+Namjerno i dalje izvan opsega: R2 video player (§3.1, model spreman: `video_source`), RSVP, potpisnici, slanje newslettera.
