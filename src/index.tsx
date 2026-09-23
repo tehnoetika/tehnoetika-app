@@ -24,7 +24,9 @@ app.use('*', async (c, next) => {
       if (sub && !sub.includes('.') && !RESERVED_SLUGS.includes(sub)) {
         const pub = await pubBySlug(c.env.DB, sub);
         if (!pub) return c.text('Publikacija ne postoji.', 404);
-        c.set('tenant', { pub, base: '', absBase: `${url.protocol}//${url.host}` });
+        // S vlastitom domenom kanonske adrese (canonical, RSS, sitemap) pokazuju na nju.
+        const absBase = pub.custom_domain ? `https://${pub.custom_domain}` : `${url.protocol}//${url.host}`;
+        c.set('tenant', { pub, base: '', absBase });
       } else {
         // Rezervirani/poseban subdomen (npr. www) može biti vezan na publikaciju preko custom_domain.
         const pub = await pubByDomain(c.env.DB, hostname);
